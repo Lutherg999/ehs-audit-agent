@@ -7,29 +7,35 @@
   <style>
     body {
       font-family: Arial, sans-serif;
-      background-color: #f7f7f7;
+      background-color: #121212; /* dark background */
+      color: #e8e6e3; /* light text */
       margin: 0;
       padding: 2rem;
     }
     h1 {
       text-align: center;
       margin-bottom: 1rem;
+      color: #ffffff;
     }
     .container {
       max-width: 800px;
       margin: 0 auto;
-      background-color: #fff;
+      background-color: #1e1e1e; /* dark card */
       padding: 1.5rem;
       border-radius: 8px;
-      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.7);
+      border: 1px solid #2a2a2a;
     }
-    textarea {
-      width: 100%;
-      height: 100px;
-      padding: 0.5rem;
-      font-size: 1rem;
-      border: 1px solid #ccc;
-      border-radius: 4px;
+    input, select, textarea {
+      background-color: #262626;
+      color: #f5f5f5;
+      border: 1px solid #444;
+    }
+    input::placeholder, textarea::placeholder {
+      color: #999;
+    }
+    select {
+      color: #f5f5f5;
     }
     button {
       margin-top: 0.5rem;
@@ -40,56 +46,84 @@
       border: none;
       border-radius: 4px;
       cursor: pointer;
+      transition: background-color 0.2s ease;
     }
     button:hover {
       background-color: #005bb5;
+    }
+    button:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
     }
     table {
       width: 100%;
       border-collapse: collapse;
       margin-top: 1.5rem;
+      color: #f5f5f5;
     }
     th, td {
       padding: 0.75rem;
-      border: 1px solid #ddd;
+      border: 1px solid #333;
     }
     th {
-      background-color: #f0f0f0;
+      background-color: #2a2a2a;
     }
   </style>
 </head>
 <body>
   <div class="container">
     <h1>EHS Inspection App</h1>
+    <button id="startInspectionBtn" onclick="startInspection()" style="margin-bottom: 1rem;">
+      Start Inspection
+    </button>
     <p>
-      Enter your observation details below. The app will suggest a corrective
-      action based on common safety issues. Use these suggestions as a starting
-      point and adjust as necessary.
+      Enter observation details below. The report will include the full
+      context you provide here (section/location, question or hazard, answer,
+      and a detailed description), along with a suggested corrective action. Use
+      these suggestions as a starting point and adjust as necessary.
     </p>
-    <textarea id="observationInput" placeholder="Describe the observation..."></textarea>
-    <button onclick="addObservation()">Add Observation</button>
+    <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+      <input id="sectionInput" type="text" placeholder="Section/Location (e.g., Steel Receiving Yard)" style="padding:0.5rem; font-size:1rem; border: 1px solid #ccc; border-radius: 4px;" />
+      <input id="questionInput" type="text" placeholder="Inspection question or hazard" style="padding:0.5rem; font-size:1rem; border: 1px solid #ccc; border-radius: 4px;" />
+      <select id="answerInput" style="padding:0.5rem; font-size:1rem; border: 1px solid #ccc; border-radius: 4px;">
+        <option value="">Answer...</option>
+        <option value="Yes">Yes</option>
+        <option value="No">No</option>
+        <option value="N/A">N/A</option>
+      </select>
+      <textarea id="descriptionInput" placeholder="Describe the observed condition or comments..." style="width:100%; height:80px; padding:0.5rem; font-size:1rem; border: 1px solid #ccc; border-radius: 4px;"></textarea>
+      <button onclick="addObservation()">Add Observation</button>
+    </div>
     <table id="observationsTable">
       <thead>
         <tr>
-          <th>Observation</th>
+          <th>Section/Location</th>
+          <th>Question/Hazard</th>
+          <th>Answer</th>
+          <th>Description</th>
           <th>Corrective Action (Suggested)</th>
         </tr>
       </thead>
       <tbody id="observationsBody"></tbody>
     </table>
+    <button id="createReportButton" onclick="createReport()" disabled>
+      Create Report
+    </button>
+    <pre id="reportOutput" style="white-space: pre-wrap; background: #1e1e1e; color: #e8e6e3; border: 1px solid #333; padding: 1rem; margin-top: 1rem; border-radius: 4px;"></pre>
     <hr style="margin: 2rem 0" />
-    <h2>Photo Inspection (Demo)</h2>
+    <h2 style="color: #ffffff;">Photo Inspection (Demo)</h2>
     <p>
-      Upload a photo of the workspace to see a demonstration of how the app could
-      mark potential hazards. The current implementation simply highlights the
-      center of the image as a "Potential hazard" for demonstration purposes.
-      In a production system, this function would call a server‑side AI model to
-      detect hazards and return bounding boxes and labels.
+      Upload a photo of the workspace to perform automated hazard detection. The
+      app will send the image to a backend service at <code>/detect</code> and display
+      the detected hazards as labeled bounding boxes. Ensure you have a
+      server-side AI model running and listening on <code>/detect</code> that returns
+      detections as an array of objects with <em>x</em>, <em>y</em>, <em>width</em>,
+      <em>height</em>, <em>label</em>, and <em>score</em> properties.
     </p>
     <input type="file" id="imageInput" accept="image/*" />
     <button onclick="runDetection()">Run Detection</button>
     <br />
-    <canvas id="imageCanvas" style="margin-top: 1rem; max-width: 100%; border: 1px solid #ccc;"></canvas>
+    <canvas id="imageCanvas" style="margin-top: 1rem; max-width: 100%; border: 1px solid #444; background-color: #262626;"></canvas>
   </div>
   <script>
     // Simple heuristic-based action generator.
@@ -130,20 +164,118 @@
     }
 
     function addObservation() {
-      const input = document.getElementById('observationInput');
-      const text = input.value.trim();
-      if (text === '') return;
-      const action = generateAction(text);
+      const sectionInput = document.getElementById('sectionInput');
+      const questionInput = document.getElementById('questionInput');
+      const answerInput = document.getElementById('answerInput');
+      const descriptionInput = document.getElementById('descriptionInput');
+      const section = sectionInput.value.trim();
+      const question = questionInput.value.trim();
+      const answer = answerInput.value;
+      const description = descriptionInput.value.trim();
+      // Require at least a question or description to be entered
+      if (question === '' && description === '') {
+        return;
+      }
+      // Generate action based on the concatenated question and description
+      const combinedText = `${question} ${description}`.trim();
+      const action = generateAction(combinedText);
       const tbody = document.getElementById('observationsBody');
       const row = document.createElement('tr');
-      const obsCell = document.createElement('td');
+      // Create cells in the order defined in the table header
+      const sectionCell = document.createElement('td');
+      const questionCell = document.createElement('td');
+      const answerCell = document.createElement('td');
+      const descriptionCell = document.createElement('td');
       const actionCell = document.createElement('td');
-      obsCell.textContent = text;
+      sectionCell.textContent = section;
+      questionCell.textContent = question;
+      answerCell.textContent = answer;
+      descriptionCell.textContent = description;
       actionCell.textContent = action;
-      row.appendChild(obsCell);
+      row.appendChild(sectionCell);
+      row.appendChild(questionCell);
+      row.appendChild(answerCell);
+      row.appendChild(descriptionCell);
       row.appendChild(actionCell);
       tbody.appendChild(row);
-      input.value = '';
+      // Add to current inspection data
+      inspectionData.observations.push({
+        section: section,
+        question: question,
+        answer: answer,
+        description: description,
+        action: action,
+      });
+      // Enable report generation
+      document.getElementById('createReportButton').disabled = false;
+      // Clear input fields for next entry
+      sectionInput.value = '';
+      questionInput.value = '';
+      answerInput.value = '';
+      descriptionInput.value = '';
+    }
+
+    // === Inspection session and report ===
+    // Holds current inspection metadata and observations
+    let inspectionData = {
+      site: '',
+      date: '',
+      observations: [],
+    };
+
+    function startInspection() {
+      const site = prompt('Enter the inspection site/location:');
+      if (site === null || site.trim() === '') {
+        return;
+      }
+      inspectionData.site = site.trim();
+      inspectionData.date = new Date().toLocaleString();
+      inspectionData.observations = [];
+      // Clear previous observations and report
+      document.getElementById('observationsBody').innerHTML = '';
+      document.getElementById('reportOutput').textContent = '';
+      document.getElementById('createReportButton').disabled = true;
+      // Clear the observation entry fields
+      document.getElementById('sectionInput').value = '';
+      document.getElementById('questionInput').value = '';
+      document.getElementById('answerInput').value = '';
+      document.getElementById('descriptionInput').value = '';
+    }
+
+    function createReport() {
+      if (inspectionData.observations.length === 0) {
+        alert('No observations recorded.');
+        return;
+      }
+      const lines = [];
+      lines.push(`Inspection report for: ${inspectionData.site}`);
+      lines.push(`Date: ${inspectionData.date}`);
+      lines.push('');
+      inspectionData.observations.forEach((item, idx) => {
+        lines.push(`${idx + 1}. Section/Location: ${item.section || 'N/A'}`);
+        lines.push(`   Question/Hazard: ${item.question || 'N/A'}`);
+        lines.push(`   Answer: ${item.answer || 'N/A'}`);
+        lines.push(`   Description: ${item.description || 'N/A'}`);
+        lines.push(`   Suggested Corrective Action: ${item.action}`);
+        lines.push('');
+      });
+      const reportText = lines.join('\n');
+      // Display the report
+      document.getElementById('reportOutput').textContent = reportText;
+      // Optionally create a downloadable text file
+      const blob = new Blob([reportText], { type: 'text/plain' });
+      const url = URL.createObjectURL(blob);
+      // Create a temporary download link
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `inspection-report-${Date.now()}.txt`;
+      link.textContent = 'Download Report';
+      // Remove existing download links
+      const existingLinks = document.querySelectorAll('#reportOutput a');
+      existingLinks.forEach((l) => l.remove());
+      // Append new download link
+      document.getElementById('reportOutput').appendChild(document.createElement('br'));
+      document.getElementById('reportOutput').appendChild(link);
     }
 
     // === Photo Inspection (Demo) ===
@@ -185,26 +317,38 @@
       });
     }
 
-    function runDetection() {
-      if (!uploadedImage.src) {
+    async function runDetection() {
+      // Ensure an image is uploaded
+      const fileInput = document.getElementById('imageInput');
+      if (!fileInput.files || fileInput.files.length === 0) {
         alert('Please upload an image first.');
         return;
       }
-      // Demo: highlight the central portion of the image.
-      const centerX = uploadedImage.width * 0.3;
-      const centerY = uploadedImage.height * 0.3;
-      const boxWidth = uploadedImage.width * 0.4;
-      const boxHeight = uploadedImage.height * 0.4;
-      const demoBoxes = [
-        {
-          x: centerX,
-          y: centerY,
-          width: boxWidth,
-          height: boxHeight,
-          label: 'Potential hazard',
-        },
-      ];
-      drawImageAndBoxes(demoBoxes);
+      // Prepare form data
+      const formData = new FormData();
+      formData.append('file', fileInput.files[0]);
+      try {
+        // Show a temporary message while detection is processing
+        drawImageAndBoxes([]);
+        const ctx = document.getElementById('imageCanvas').getContext('2d');
+        ctx.font = '18px Arial';
+        ctx.fillStyle = '#00aaff';
+        ctx.fillText('Running detection...', 10, 25);
+        // Send the image to the detection endpoint
+        const response = await fetch('/detect', {
+          method: 'POST',
+          body: formData,
+        });
+        if (!response.ok) {
+          throw new Error('Detection API request failed');
+        }
+        const detections = await response.json();
+        // Expect detections as an array of { x, y, width, height, label, score }
+        drawImageAndBoxes(detections);
+      } catch (error) {
+        console.error(error);
+        alert('Detection failed. Ensure the backend detection service is running.');
+      }
     }
 
     // Attach change event
