@@ -77,6 +77,19 @@
       </thead>
       <tbody id="observationsBody"></tbody>
     </table>
+    <hr style="margin: 2rem 0" />
+    <h2>Photo Inspection (Demo)</h2>
+    <p>
+      Upload a photo of the workspace to see a demonstration of how the app could
+      mark potential hazards. The current implementation simply highlights the
+      center of the image as a "Potential hazard" for demonstration purposes.
+      In a production system, this function would call a server‑side AI model to
+      detect hazards and return bounding boxes and labels.
+    </p>
+    <input type="file" id="imageInput" accept="image/*" />
+    <button onclick="runDetection()">Run Detection</button>
+    <br />
+    <canvas id="imageCanvas" style="margin-top: 1rem; max-width: 100%; border: 1px solid #ccc;"></canvas>
   </div>
   <script>
     // Simple heuristic-based action generator.
@@ -132,6 +145,70 @@
       tbody.appendChild(row);
       input.value = '';
     }
+
+    // === Photo Inspection (Demo) ===
+    let uploadedImage = new Image();
+
+    function handleImageUpload(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = function (e) {
+        uploadedImage.onload = function () {
+          // Draw the image without boxes initially
+          drawImageAndBoxes([]);
+        };
+        uploadedImage.src = e.target.result;
+      };
+      reader.readAsDataURL(file);
+    }
+
+    function drawImageAndBoxes(boxes) {
+      const canvas = document.getElementById('imageCanvas');
+      const ctx = canvas.getContext('2d');
+      // Resize canvas to image dimensions
+      canvas.width = uploadedImage.width;
+      canvas.height = uploadedImage.height;
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.drawImage(uploadedImage, 0, 0);
+      ctx.lineWidth = 2;
+      ctx.strokeStyle = 'red';
+      ctx.fillStyle = 'red';
+      ctx.font = '16px Arial';
+      boxes.forEach((box) => {
+        const { x, y, width, height, label } = box;
+        ctx.strokeRect(x, y, width, height);
+        // Position label above the rectangle if possible
+        const labelX = x;
+        const labelY = y > 20 ? y - 5 : y + 15;
+        ctx.fillText(label, labelX, labelY);
+      });
+    }
+
+    function runDetection() {
+      if (!uploadedImage.src) {
+        alert('Please upload an image first.');
+        return;
+      }
+      // Demo: highlight the central portion of the image.
+      const centerX = uploadedImage.width * 0.3;
+      const centerY = uploadedImage.height * 0.3;
+      const boxWidth = uploadedImage.width * 0.4;
+      const boxHeight = uploadedImage.height * 0.4;
+      const demoBoxes = [
+        {
+          x: centerX,
+          y: centerY,
+          width: boxWidth,
+          height: boxHeight,
+          label: 'Potential hazard',
+        },
+      ];
+      drawImageAndBoxes(demoBoxes);
+    }
+
+    // Attach change event
+    document.getElementById('imageInput').addEventListener('change', handleImageUpload);
   </script>
 </body>
 </html>
