@@ -101,7 +101,8 @@
           <th>Question/Hazard</th>
           <th>Answer</th>
           <th>Description</th>
-          <th>Corrective Action (Suggested)</th>
+        <th>Corrective Action (Suggested)</th>
+        <th>Applicable Standards</th>
         </tr>
       </thead>
       <tbody id="observationsBody"></tbody>
@@ -163,6 +164,150 @@
       return 'Evaluate the observation and determine appropriate corrective actions.';
     }
 
+    // Mapping of observation keywords to applicable standards and agencies. Each entry
+    // contains a matching function and an array of reference objects. A reference
+    // object includes the governing agency, the cited standard, and a brief
+    // description of the requirement. These references are based on publicly
+    // available OSHA and NFPA guidance, such as 29 CFR and NEC articles.
+    const hazardReferenceRules = [
+      {
+        match: (text) => text.includes('filter') && text.includes('paint'),
+        references: [
+          {
+            agency: 'OSHA',
+            standard: '29 CFR 1910.107(b)(5)',
+            description: 'Overspray filters and filter rolls must be inspected and replaced to maintain proper air velocity in spray booths',
+          },
+          {
+            agency: 'OSHA',
+            standard: '29 CFR 1910.94(c)(3)(iii)(a)',
+            description: 'Overspray filters shall be installed and maintained in accordance with 1910.107(b)(5), and located for easy inspection, cleaning or replacement',
+          },
+        ],
+      },
+      {
+        match: (text) => text.includes('steel') && (text.includes('bollard') || text.includes('fabricated')),
+        references: [
+          {
+            agency: 'OSHA',
+            standard: '29 CFR 1910.176(c)',
+            description: 'Storage of material shall not create a hazard; materials stored in tiers must be stacked, blocked, interlocked and limited in height so they are stable and secure against sliding or collapse',
+          },
+          {
+            agency: 'OSHA',
+            standard: '29 CFR 1910.22(a)(1)-(3)',
+            description: 'Workplaces and walking-working surfaces must be kept clean, orderly and free of hazards such as spills, debris or protruding objects',
+          },
+        ],
+      },
+      {
+        match: (text) => (text.includes('band saw') || (text.includes('saw') && text.includes('guard'))),
+        references: [
+          {
+            agency: 'OSHA',
+            standard: '29 CFR 1910.212(a)(1)',
+            description: 'One or more methods of machine guarding must be provided to protect workers from hazards like nip points, rotating parts and flying chips',
+          },
+          {
+            agency: 'OSHA',
+            standard: '29 CFR 1910.212(a)(3)(ii)',
+            description: 'The point of operation of machines that exposes an employee to injury must be guarded to prevent any part of the body entering the danger zone',
+          },
+        ],
+      },
+      {
+        match: (text) => ((text.includes('face shield') || text.includes('eye protection')) && text.includes('wood saw')),
+        references: [
+          {
+            agency: 'OSHA',
+            standard: '29 CFR 1910.133(a)(1)',
+            description: 'Employers must ensure each affected employee uses appropriate eye or face protection when exposed to hazards from flying particles or harmful substances',
+          },
+        ],
+      },
+      {
+        match: (text) => (text.includes('stack') || text.includes('piles')),
+        references: [
+          {
+            agency: 'OSHA',
+            standard: '29 CFR 1910.176(c)',
+            description: 'Materials stored in tiers must be stacked, blocked, interlocked and limited in height so they remain stable and secure against sliding or collapse',
+          },
+          {
+            agency: 'OSHA',
+            standard: '29 CFR 1910.22(a)(1)-(3)',
+            description: 'Walkways and work areas must be maintained in a clean, orderly condition and free of hazards such as spills or debris',
+          },
+        ],
+      },
+      {
+        match: (text) => text.includes('transformer'),
+        references: [
+          {
+            agency: 'NFPA 70 (NEC)',
+            standard: 'Section 110.26',
+            description: 'Electrical equipment must have working space with at least 3 ft of front clearance, 30 in of side clearance and 6.5 ft of headroom to allow safe operation and maintenance',
+          },
+        ],
+      },
+      {
+        match: (text) => (text.includes('exit') && text.includes('obstruct')),
+        references: [
+          {
+            agency: 'OSHA',
+            standard: '29 CFR 1910.37(a)(3)',
+            description: 'Exit routes must be free and unobstructed; nothing may be placed in the exit route that could block employees’ safe egress',
+          },
+        ],
+      },
+      {
+        match: (text) => (text.includes('exit sign') || (text.includes('exit') && text.includes('sign'))),
+        references: [
+          {
+            agency: 'OSHA',
+            standard: '29 CFR 1910.37(b)(2)-(4)',
+            description: 'Exits must be clearly visible and marked with an illuminated sign reading “Exit”; the path to each exit must be marked so employees can see and follow it',
+          },
+        ],
+      },
+      {
+        match: (text) => (text.includes('paint bucket') || (text.includes('paint') && text.includes('spill'))),
+        references: [
+          {
+            agency: 'OSHA',
+            standard: '29 CFR 1910.106',
+            description: 'Flammable liquids (including paint) must be kept in approved safety cans or cabinets; do not store more than 60 gallons of category 1‑3 liquids or 120 gallons of category 4 liquids in a cabinet and label cabinets “Flammable – Keep Fire Away”',
+          },
+        ],
+      },
+      {
+        match: (text) => text.includes('bollard'),
+        references: [
+          {
+            agency: 'OSHA',
+            standard: '29 CFR 1910.176(c)',
+            description: 'Materials must be stored so they do not create hazards; barriers such as bollards may be used to protect workers and equipment from moving or falling materials',
+          },
+        ],
+      },
+    ];
+
+    // Determine applicable references for an observation. Returns an array of formatted
+    // strings like “OSHA 29 CFR 1910.176(c) – description”. If no match is found,
+    // returns an empty array.
+    function generateReferences(observation) {
+      const text = observation.toLowerCase();
+      const refs = [];
+      hazardReferenceRules.forEach((rule) => {
+        if (rule.match(text)) {
+          rule.references.forEach((ref) => {
+            refs.push(`${ref.agency} ${ref.standard} – ${ref.description}`);
+          });
+        }
+      });
+      return refs;
+    }
+
     function addObservation() {
       const sectionInput = document.getElementById('sectionInput');
       const questionInput = document.getElementById('questionInput');
@@ -179,6 +324,7 @@
       // Generate action based on the concatenated question and description
       const combinedText = `${question} ${description}`.trim();
       const action = generateAction(combinedText);
+      const references = generateReferences(combinedText);
       const tbody = document.getElementById('observationsBody');
       const row = document.createElement('tr');
       // Create cells in the order defined in the table header
@@ -187,16 +333,19 @@
       const answerCell = document.createElement('td');
       const descriptionCell = document.createElement('td');
       const actionCell = document.createElement('td');
+      const refCell = document.createElement('td');
       sectionCell.textContent = section;
       questionCell.textContent = question;
       answerCell.textContent = answer;
       descriptionCell.textContent = description;
       actionCell.textContent = action;
+      refCell.textContent = references.join('; ');
       row.appendChild(sectionCell);
       row.appendChild(questionCell);
       row.appendChild(answerCell);
       row.appendChild(descriptionCell);
       row.appendChild(actionCell);
+      row.appendChild(refCell);
       tbody.appendChild(row);
       // Add to current inspection data
       inspectionData.observations.push({
@@ -205,6 +354,7 @@
         answer: answer,
         description: description,
         action: action,
+        references: references,
       });
       // Enable report generation
       document.getElementById('createReportButton').disabled = false;
@@ -257,6 +407,9 @@
         lines.push(`   Answer: ${item.answer || 'N/A'}`);
         lines.push(`   Description: ${item.description || 'N/A'}`);
         lines.push(`   Suggested Corrective Action: ${item.action}`);
+        if (item.references && item.references.length > 0) {
+          lines.push(`   Applicable Standards: ${item.references.join('; ')}`);
+        }
         lines.push('');
       });
       const reportText = lines.join('\n');
