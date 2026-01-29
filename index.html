@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>EHS Inspection App</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f7f7f7;
+      margin: 0;
+      padding: 2rem;
+    }
+    h1 {
+      text-align: center;
+      margin-bottom: 1rem;
+    }
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+      background-color: #fff;
+      padding: 1.5rem;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+    textarea {
+      width: 100%;
+      height: 100px;
+      padding: 0.5rem;
+      font-size: 1rem;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+    }
+    button {
+      margin-top: 0.5rem;
+      padding: 0.5rem 1rem;
+      font-size: 1rem;
+      color: #fff;
+      background-color: #0070f3;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #005bb5;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 1.5rem;
+    }
+    th, td {
+      padding: 0.75rem;
+      border: 1px solid #ddd;
+    }
+    th {
+      background-color: #f0f0f0;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>EHS Inspection App</h1>
+    <p>
+      Enter your observation details below. The app will suggest a corrective
+      action based on common safety issues. Use these suggestions as a starting
+      point and adjust as necessary.
+    </p>
+    <textarea id="observationInput" placeholder="Describe the observation..."></textarea>
+    <button onclick="addObservation()">Add Observation</button>
+    <table id="observationsTable">
+      <thead>
+        <tr>
+          <th>Observation</th>
+          <th>Corrective Action (Suggested)</th>
+        </tr>
+      </thead>
+      <tbody id="observationsBody"></tbody>
+    </table>
+  </div>
+  <script>
+    // Simple heuristic-based action generator.
+    function generateAction(observation) {
+      const text = observation.toLowerCase();
+      if (text.includes('filter') && text.includes('paint')) {
+        return 'Replace missing paint booth filters and verify all filters are installed properly.';
+      }
+      if (text.includes('steel') && (text.includes('bollard') || text.includes('fabricated'))) {
+        return 'Install additional bollards and schedule regular steel removal to avoid overcrowding.';
+      }
+      if (text.includes('band saw') || (text.includes('saw') && text.includes('guard'))) {
+        return 'Do not use the saw until an appropriate blade guard is installed or repaired.';
+      }
+      if ((text.includes('face shield') || text.includes('eye protection')) && text.includes('wood saw')) {
+        return 'Provide required face shield at the wood saw station and retrain operators on PPE.';
+      }
+      if (text.includes('stack') || text.includes('piles')) {
+        return 'Re-stack material to maintain stable, safe piles and keep work areas clear.';
+      }
+      if (text.includes('transformer')) {
+        return 'Keep the transformer area clear and maintain required clearance at all times.';
+      }
+      if (text.includes('exit') && text.includes('obstruct')) {
+        return 'Remove the obstruction and ensure exit doors remain clear at all times.';
+      }
+      if (text.includes('exit sign') || (text.includes('exit') && text.includes('sign'))) {
+        return 'Replace the broken exit sign and verify the illumination is functioning.';
+      }
+      if (text.includes('paint bucket') || (text.includes('paint') && text.includes('spill'))) {
+        return 'Place paint buckets on approved spill pallets and provide additional pallets as needed.';
+      }
+      if (text.includes('bollard')) {
+        return 'Install additional bollards as required to protect workers and equipment.';
+      }
+      // Default action
+      return 'Evaluate the observation and determine appropriate corrective actions.';
+    }
+
+    function addObservation() {
+      const input = document.getElementById('observationInput');
+      const text = input.value.trim();
+      if (text === '') return;
+      const action = generateAction(text);
+      const tbody = document.getElementById('observationsBody');
+      const row = document.createElement('tr');
+      const obsCell = document.createElement('td');
+      const actionCell = document.createElement('td');
+      obsCell.textContent = text;
+      actionCell.textContent = action;
+      row.appendChild(obsCell);
+      row.appendChild(actionCell);
+      tbody.appendChild(row);
+      input.value = '';
+    }
+  </script>
+</body>
+</html>
