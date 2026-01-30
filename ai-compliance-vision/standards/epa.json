@@ -1,0 +1,17 @@
+{
+  "40 CFR 112.7": {
+    "condition": "spill",
+    "severity": "high",
+    "description": "Facility drainage should prevent discharge of oil or hazardous substances."
+  },
+  "40 CFR 264.173": {
+    "condition": "spill",
+    "severity": "high",
+    "description": "Container holding hazardous waste must be closed during storage."
+  },
+  "40 CFR 265.175": {
+    "condition": "spill",
+    "severity": "medium",
+    "description": "Secondary containment is required for containers of hazardous waste."
+  }
+}
