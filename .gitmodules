@@ -1,0 +1,6 @@
+[submodule "ai-compliance-vision/external/safety-detection-yolov8"]
+    path = ai-compliance-vision/external/safety-detection-yolov8
+    url = https://github.com/BiswadeepRoy/Safety-Detection-YOLOv8.git
+[submodule "ai-compliance-vision/external/ppe_detection_yolo"]
+    path = ai-compliance-vision/external/ppe_detection_yolo
+    url = https://github.com/vinayakmane31/PPE_detection_YOLO.git
