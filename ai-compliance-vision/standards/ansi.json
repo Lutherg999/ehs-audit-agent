@@ -1,0 +1,17 @@
+{
+  "ANSI Z87.1": {
+    "condition": "safety_glasses_missing",
+    "severity": "high",
+    "description": "Eye and face protection devices shall be provided for employees exposed to hazards."
+  },
+  "ANSI Z359.1": {
+    "condition": "no_guardrail",
+    "severity": "medium",
+    "description": "Fall protection systems shall be used when guardrails are not present."
+  },
+  "ANSI/ASME B20.1": {
+    "condition": "unguarded_machine",
+    "severity": "high",
+    "description": "Guarding shall be provided to protect persons from hazards associated with conveyors and machinery."
+  }
+}
