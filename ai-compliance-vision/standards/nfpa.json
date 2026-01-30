@@ -1,0 +1,17 @@
+{
+  "NFPA 101 7.1.10": {
+    "condition": "blocked_exit",
+    "severity": "high",
+    "description": "Means of egress shall be continuously maintained free of all obstructions."
+  },
+  "NFPA 30 9.4": {
+    "condition": "spill",
+    "severity": "medium",
+    "description": "Flammable and combustible liquids must be stored to minimize leaks and spills."
+  },
+  "NFPA 241 7.6": {
+    "condition": "no_guardrail",
+    "severity": "medium",
+    "description": "Temporary guardrails shall be used to prevent falls on construction sites."
+  }
+}
