@@ -1,0 +1,22 @@
+{
+  "29 CFR 1910.135": {
+    "condition": "hardhat_missing",
+    "severity": "high",
+    "description": "Protective helmets shall be worn in areas where there is a potential for head injury."
+  },
+  "29 CFR 1910.178": {
+    "condition": "forklift_pedestrian_proximity",
+    "severity": "critical",
+    "description": "Powered industrial truck operations require separation between vehicles and pedestrians."
+  },
+  "29 CFR 1910.23": {
+    "condition": "no_guardrail",
+    "severity": "high",
+    "description": "Guardrail systems must be provided to protect employees from falls."
+  },
+  "29 CFR 1910.27": {
+    "condition": "ladder_unsafe",
+    "severity": "medium",
+    "description": "Ladders must be used properly and maintained to prevent employee injury."
+  }
+}
